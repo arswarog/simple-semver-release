@@ -3,24 +3,54 @@
   "version": "2.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "version": "conventional-changelog -i CHANGELOG.md -s && git add CHANGELOG.md",
-    "commit": "git-cz"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arswarog/test.git"
   },
-  "author": "",
+  "scripts": {
+    "test": "echo \"Tests ok\"",
+    "version": "conventional-changelog -i CHANGELOG.md -s && git add CHANGELOG.md",
+    "commit": "git-cz",
+    "release": "semantic-release"
+  },
+  "author": "arswarog@yandex.ru",
   "license": "ISC",
   "dependencies": {
     "conventional-changelog": "^3.1.21"
   },
   "devDependencies": {
+    "@semantic-release/git": "^9.0.0",
     "commitizen": "^4.1.2",
+    "commitlint": "^9.1.0",
     "conventional-changelog-cli": "^2.0.34",
-    "cz-conventional-changelog": "3.2.0"
+    "cz-conventional-changelog": "3.2.0",
+    "husky": "^4.2.5",
+    "semantic-release": "^17.1.1"
   },
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm test",
+      "-commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+    }
+  },
+  "release": {
+    "branches": [
+      "dev"
+    ],
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      [
+        "@semantic-release/git",
+        {
+          "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+        }
+      ]
+    ]
   }
 }
