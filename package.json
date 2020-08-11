@@ -1,0 +1,26 @@
+{
+  "name": "tmp",
+  "version": "2.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "version": "conventional-changelog -i CHANGELOG.md -s && git add CHANGELOG.md",
+    "commit": "git-cz"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "conventional-changelog": "^3.1.21"
+  },
+  "devDependencies": {
+    "commitizen": "^4.1.2",
+    "conventional-changelog-cli": "^2.0.34",
+    "cz-conventional-changelog": "3.2.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
+}
