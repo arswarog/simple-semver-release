@@ -1,12 +1,3 @@
-## 2.0.0 (2020-08-11)
-
-* refactor(f2): rename f1 to f2 66e39de
-
-
-### BREAKING CHANGE
-
-* rename unused file
-
 
 ## <small>1.0.2 (2020-08-11)</small>
 
