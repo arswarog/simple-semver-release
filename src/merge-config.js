@@ -220,7 +220,7 @@ function mergeConfig (options, context, gitRawCommitsOpts, parserOpts, writerOpt
                 }
 
                 if (type) {
-                    hostOpts = require('../hosts/' + type)
+                    hostOpts = require('./hosts/' + type)
 
                     context = _.assign({
                         issue: hostOpts.issue,

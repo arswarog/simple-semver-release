@@ -1,6 +1,6 @@
 {
   "name": "tmp",
-  "version": "2.2.0",
+  "version": "0.0.1",
   "description": "",
   "main": "src/index.js",
   "repository": {
@@ -23,12 +23,14 @@
   "devDependencies": {
     "@semantic-release/git": "^9.0.0",
     "@types/conventional-changelog-writer": "^4.0.0",
+    "@types/semver": "^7.3.1",
     "commitizen": "^4.1.2",
     "commitlint": "^9.1.0",
     "conventional-changelog-cli": "^2.0.34",
     "cz-conventional-changelog": "3.2.0",
     "husky": "^4.2.5",
     "semantic-release": "^17.1.1",
+    "semver": "^7.3.2",
     "ts-node": "^8.10.2",
     "typescript": "^3.9.7"
   },
