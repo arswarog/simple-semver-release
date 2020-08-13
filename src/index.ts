@@ -11,285 +11,75 @@ import {
     setVersionTag,
 } from './core';
 
-var conventionalChangelogPresetLoader = require('conventional-changelog-preset-loader');
-var addStream = require('add-stream');
-
-
-var fs = require('fs');
-var meow = require('meow');
-var tempfile = require('tempfile');
-var _ = require('lodash');
-var resolve = require('path').resolve;
-
-var cli = meow(`
-    Usage
-      conventional-changelog
-
-    Example
-      conventional-changelog -i CHANGELOG.md --same-file
-
-    Options
-      -i, --infile              Read the CHANGELOG from this file
-
-      -o, --outfile             Write the CHANGELOG to this file
-                                If unspecified, it prints to stdout
-
-      -s, --same-file           Outputting to the infile so you don't need to specify the same file as outfile
-
-      -p, --preset              Name of the preset you want to use. Must be one of the following:
-                                angular, atom, codemirror, ember, eslint, express, jquery, jscs or jshint
-
-      -k, --pkg                 A filepath of where your package.json is located
-                                Default is the closest package.json from cwd
-
-      -a, --append              Should the newer release be appended to the older release
-                                Default: false
-
-      -r, --release-count       How many releases to be generated from the latest
-                                If 0, the whole changelog will be regenerated and the outfile will be overwritten
-                                Default: 1
-
-      --skip-unstable           If given, unstable tags will be skipped, e.g., x.x.x-alpha.1, x.x.x-rc.2
-
-      -u, --output-unreleased   Output unreleased changelog
-
-      -v, --verbose             Verbose output. Use this for debugging
-                                Default: false
-
-      -n, --config              A filepath of your config script
-                                Example of a config script: https://github.com/conventional-changelog/conventional-changelog/blob/master/packages/conventional-changelog-cli/test/fixtures/config.js
-
-      -c, --context             A filepath of a json that is used to define template variables
-      -l, --lerna-package       Generate a changelog for a specific lerna package (:pkg-name@1.0.0)
-      -t, --tag-prefix          Tag prefix to consider when reading the tags
-      --commit-path             Generate a changelog scoped to a specific directory
-`, {
-    booleanDefault: undefined,
-    flags: {
-        infile: {
-            alias: 'i',
-            type: 'string',
-        },
-        outfile: {
-            alias: 'o',
-            type: 'string',
-        },
-        'same-file': {
-            alias: 's',
-            type: 'boolean',
-        },
-        preset: {
-            alias: 'p',
-            type: 'string',
-        },
-        pkg: {
-            alias: 'k',
-            type: 'string',
-        },
-        append: {
-            alias: 'a',
-            type: 'boolean',
-        },
-        'release-count': {
-            alias: 'r',
-            type: 'number',
-        },
-        'skip-unstable': {
-            type: 'boolean',
-        },
-        'output-unreleased': {
-            alias: 'u',
-            type: 'boolean',
-        },
-        verbose: {
-            alias: 'v',
-            type: 'boolean',
-        },
-        config: {
-            alias: 'n',
-            type: 'string',
-        },
-        context: {
-            alias: 'c',
-            type: 'string',
-        },
-        'lerna-package': {
-            alias: 'l',
-            type: 'string',
-        },
-        'tag-prefix': {
-            alias: 't',
-            type: 'string',
-        },
-    },
-});
-
-var config;
-var flags = cli.flags;
-var infile = flags.infile;
-var outfile = flags.outfile;
-var sameFile = flags.sameFile;
-var append = flags.append;
-var releaseCount = flags.releaseCount;
-var skipUnstable = flags.skipUnstable;
-
-if (infile && infile === outfile) {
-    sameFile = true;
-} else if (sameFile) {
-    if (infile) {
-        outfile = infile;
-    } else {
-        console.error('infile must be provided if same-file flag presents.');
-        process.exit(1);
-    }
-}
-
-var options = _.omitBy({
-    preset: flags.preset,
-    pkg: {
-        path: flags.pkg,
-    },
-    append: append,
-    releaseCount: releaseCount,
-    skipUnstable: skipUnstable,
-    outputUnreleased: flags.outputUnreleased,
-    lernaPackage: flags.lernaPackage,
-    tagPrefix: flags.tagPrefix,
-}, _.isUndefined);
-
-if (flags.verbose) {
-    options.debug = console.info.bind(console);
-    options.warn = console.warn.bind(console);
-}
-
-var templateContext;
-
-var outStream;
-
-try {
-    if (flags.context) {
-        templateContext = require(resolve(process.cwd(), flags.context));
-    }
-
-    if (flags.config) {
-        config = require(resolve(process.cwd(), flags.config));
-        options.config = config;
-        options = _.merge(options, config.options);
-    } else {
-        config = {};
-    }
-} catch (err) {
-    console.error('Failed to get file. ' + err);
-    process.exit(1);
-}
-
-var gitRawCommitsOpts = _.merge({}, config.gitRawCommitsOpts || {});
-if (flags.commitPath) gitRawCommitsOpts.path = flags.commitPath;
-
-var changelogStream = conventionalChangelog(options, templateContext, gitRawCommitsOpts, config.parserOpts, config.writerOpts);
-//     .on('error', function (err) {
-//         if (flags.verbose) {
-//             console.error(err.stack);
-//         } else {
-//             console.error(err.toString());
-//         }
-//         process.exit(1);
-//     });
-
-function noInputFile() {
-    if (outfile) {
-        outStream = fs.createWriteStream(outfile);
-    } else {
-        outStream = process.stdout;
-    }
-
-    changelogStream
-        .pipe(outStream);
-}
-
-if (infile && releaseCount !== 0) {
-    var readStream = fs.createReadStream(infile)
-                       .on('error', function () {
-                           if (flags.verbose) {
-                               console.warn('infile does not exist.');
-                           }
-
-                           if (sameFile) {
-                               noInputFile();
-                           }
-                       });
-
-    if (sameFile) {
-        if (options.append) {
-            changelogStream
-                .pipe(fs.createWriteStream(outfile, {
-                    flags: 'a',
-                }));
-        } else {
-            var tmp = tempfile();
-
-            changelogStream
-                .pipe(addStream(readStream))
-                .pipe(fs.createWriteStream(tmp))
-                .on('finish', function () {
-                    fs.createReadStream(tmp)
-                      .pipe(fs.createWriteStream(outfile));
-                });
-        }
-    } else {
-        if (outfile) {
-            outStream = fs.createWriteStream(outfile);
-        } else {
-            outStream = process.stdout;
-        }
-
-        var stream;
-
-        if (options.append) {
-            stream = readStream
-                .pipe(addStream(changelogStream));
-        } else {
-            stream = changelogStream
-                .pipe(addStream(readStream));
-        }
-
-        stream
-            .pipe(outStream);
-    }
-} else {
-    noInputFile();
-}
 
 const semverRelease = new SemverRelease();
 
-semverRelease.fetch(options, templateContext, gitRawCommitsOpts, config.parserOpts, config.writerOpts)
-             .then(async () => {
-                 // console.log(semverRelease.context);
-                 console.log('---')
-                 console.log('current version ', semverRelease.version);
-                 console.log('nextVersion', semverRelease.nextVersion);
-                 // console.log('changelog:\n', semverRelease.additionalChangelog);
-//                  await semverRelease.updateVersion();
-//                  await semverRelease.updateChangelog();
-//                  await semverRelease.commit();
-             });
+export async function commandPipeline(newVersion: string, {verbose, fetch}: {
+    fetch: boolean,
+    verbose: number
+}) {
+    console.log('processPipeline', newVersion);
 
-function conventionalChangelog(options, context, gitRawCommitsOpts, parserOpts, writerOpts) {
-    options.warn = options.warn || function () {};
+    await commandCheck({verbose} as any);
+    await commandUpdateVersion(newVersion, {verbose} as any);
+    await commandChangelog({verbose} as any);
+    await commandCommit({verbose} as any);
+}
 
-    if (options.preset) {
-        try {
-            options.config = conventionalChangelogPresetLoader(options.preset);
-        } catch (err) {
-            if (typeof options.preset === 'object') {
-                options.warn(`Preset: "${options.preset.name}" ${err.message}`);
-            } else if (typeof options.preset === 'string') {
-                options.warn(`Preset: "${options.preset}" ${err.message}`);
-            } else {
-                options.warn(`Preset: ${err.message}`);
-            }
-        }
-    }
+export async function commandCheck(options: { fetch: boolean, verbose: number }) {
+    if (!semverRelease.version)
+        await semverRelease.fetch();
+    console.log(`Current version: ${semverRelease.version}`);
+    console.log(`New version: ${semverRelease.newVersion}`);
+    console.log(`Diff: ${semverRelease.commits.length} commits`);
+    console.log(`  Fixes: ${semverRelease.commitStat.fixes}`);
+    console.log(`  Features: ${semverRelease.commitStat.features}`);
+    console.log(`  BreakingChanges: ${semverRelease.commitStat.breakingChanges}`);
+}
 
-    return conventionalChangelogCore(options, context, gitRawCommitsOpts, parserOpts, writerOpts);
+export async function commandUpdateVersion(newVersion: string, {force, printOnly, verbose}: { force: boolean, printOnly: boolean, verbose: number }) {
+    if (!semverRelease.version)
+        await semverRelease.fetch();
+    if (newVersion && newVersion !== 'auto')
+        semverRelease.newVersion = newVersion;
+
+    if (printOnly)
+        return console.log(semverRelease.version);
+
+    if (verbose)
+        console.log(`Update version in package.json: from ${semverRelease.version} to ${semverRelease.newVersion}`);
+
+    await semverRelease.updateVersion();
+
+    if (verbose)
+        console.log(`Done`);
+}
+
+export async function commandChangelog({verbose, printOnly}: { printOnly: boolean, verbose: number }) {
+    if (!semverRelease.version)
+        await semverRelease.fetch();
+    const log = printLog(verbose);
+    const changelog = semverRelease.additionalChangelog;
+    if (printOnly)
+        return console.log('Additional changelog:\n' + changelog);
+
+    log(2, 'Writing changelog');
+    semverRelease.updateChangelog();
+    log(2, 'Done');
+}
+
+export async function commandCommit({verbose}: { push: boolean, tag: boolean, verbose: number }) {
+    const log = printLog(verbose);
+
+    if (!semverRelease.version)
+        await semverRelease.fetch();
+    console.log(semverRelease.newVersion);
+    await semverRelease.commit();
+}
+
+function printLog(verbose: number) {
+    return (level: number, message: string) => {
+        if (verbose >= level)
+            console.log(`LOG: ${message}`);
+    };
 }

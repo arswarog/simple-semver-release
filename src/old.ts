@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-import { conventionalChangelogCore, calculateNextVersion } from './core';
+import { conventionalChangelogCore } from './core';
 
 var conventionalChangelogPresetLoader = require('conventional-changelog-preset-loader');
 var addStream = require('add-stream');
@@ -251,10 +251,6 @@ if (infile && releaseCount !== 0) {
 } else {
     noInputFile();
 }
-
-setTimeout(() => {
-    console.log(calculateNextVersion(options, templateContext, gitRawCommitsOpts, config.parserOpts, config.writerOpts));
-}, 1000);
 
 function conventionalChangelog(options, context, gitRawCommitsOpts, parserOpts, writerOpts) {
     options.warn = options.warn || function () {};

@@ -1,5 +1,12 @@
 import { ReleaseType, inc as incrementVersion } from 'semver';
 
+var conventionalChangelogPresetLoader = require('conventional-changelog-preset-loader');
+
+var fs = require('fs');
+var meow = require('meow');
+var tempfile = require('tempfile');
+var resolve = require('path').resolve;
+
 const {Readable, Writable, Transform} = require('stream');
 const addStream = require('add-stream');
 const gitRawCommits = require('git-raw-commits');
@@ -14,7 +21,7 @@ const stream = require('stream');
 const through = require('through2');
 const shell = require('shelljs');
 
-const mergeConfig = require('./merge-config');
+import { mergeConfig } from './merge-config';
 
 export interface ICommit {
     type: string;
@@ -35,115 +42,9 @@ export interface ICommit {
 
 class LogWriter extends Writable {
     _write(chunk, encoding, callback) {
-        console.log(`*******\n${chunk.toString()}`);
+        // console.log(`*******\n${chunk.toString()}`);
 
         callback();
-    }
-}
-
-export class SemverRelease {
-    context: ConventionalChangelogWriter.Context;
-    commits: ICommit[];
-
-    version: string;
-    nextVersion: string;
-    additionalChangelog: string;
-
-    constructor() {
-    }
-
-    async fetch(options, initialContext, gitRawCommitsOpts, parserOpts, writerOpts, gitRawExecOpts?) {
-        const {commits, context} = await commitsAsArray(options, initialContext, gitRawCommitsOpts, parserOpts, writerOpts, gitRawExecOpts);
-        this.commits = commits;
-        this.context = context;
-        this.version = context.packageData.version;
-        this.nextVersion = await this.calculateNextVersion();
-        this.additionalChangelog = await this.getAdditionalChangelog();
-    }
-
-    private calculateNextVersion(): string {
-        // console.log(commits)
-
-        // console.log(options, context, gitRawCommitsOpts, parserOpts, writerOpts, gitRawExecOpts)
-
-        let breakingChanges = false;
-        let features = false;
-        let fixes = false;
-
-        this.commits.forEach(commit => {
-            // console.log('commit', commit);
-            if (commit.type === 'fix') fixes = true;
-            if (commit.type === 'feat') features = true;
-            if (commit.notes.some(note => note.title.toUpperCase() === 'BREAKING CHANGE'))
-                breakingChanges = true;
-        });
-
-        let nextVersion = this.version;
-        if (breakingChanges)
-            nextVersion = incrementVersion(this.version, 'major');
-        else if (features)
-            nextVersion = incrementVersion(this.version, 'minor');
-        else if (fixes)
-            nextVersion = incrementVersion(this.version, 'patch');
-
-        console.log('load ' + this.commits.length + ' commits');
-        console.log('current version', this.version);
-        console.log('breakingChanges', breakingChanges);
-        console.log('features', features);
-        console.log('fixes', fixes);
-        console.log('next version', nextVersion);
-
-        return nextVersion;
-    }
-
-    private getAdditionalChangelog(): Promise<string> {
-        const nextContext = {
-            ...this.context,
-            version: this.nextVersion,
-        };
-
-        return changelogByCommitArray(nextContext, this.commits);
-    }
-
-    async updateVersion() {
-        const content = readFileSync('./package.json').toString();
-        const json = JSON.parse(content);
-        if (json.version === this.version)
-            return console.log('Version already updated');
-        json.version = this.version;
-        writeFileSync('./package.json', JSON.stringify(json, null, 2));
-    }
-
-    async updateChangelog() {
-        const additional = this.additionalChangelog;
-        const content = readFileSync('./CHANGELOG.md').toString();
-        if (content.substr(0, additional.length) === additional)
-            return console.log('Changelog already updated');
-
-        writeFileSync('./CHANGELOG.md', [
-            additional,
-            content,
-        ].join('\n'));
-    }
-
-    async commit() {
-        await addToGit(['package.json', 'CHANGELOG.md']);
-
-        const versionTag = 'v' + this.nextVersion;
-
-        const headHash = await getGitHead();
-        const tags = await getTags('HEAD');
-
-        if (tags.includes(versionTag)) {
-            const tagHash = await getTagHash(versionTag);
-            if (tagHash === headHash)
-                return console.log('Tag already created and already on head');
-            else
-                throw new Error(`Tag already exists but not on head. Can not update`);
-        }
-
-        await commit(`chore(release): ${this.nextVersion}`);
-        await setVersionTag(this.nextVersion);
     }
 }
 
@@ -498,3 +399,306 @@ export function conventionalChangelogCore(options, context, gitRawCommitsOpts, p
 
     return readable;
 }
+
+// last index
+
+
+// const semverRelease = new SemverRelease();
+//
+// semverRelease.fetch(options, templateContext, gitRawCommitsOpts, config.parserOpts, config.writerOpts)
+//              .then(async () => {
+//                  // console.log(semverRelease.context);
+//                  console.log('---');
+//                  console.log('current version ', semverRelease.version);
+//                  console.log('nextVersion', semverRelease.nextVersion);
+//                  // console.log('changelog:\n', semverRelease.additionalChangelog);
+// //                  await semverRelease.updateVersion();
+// //                  await semverRelease.updateChangelog();
+// //                  await semverRelease.commit();
+//              });
+
+
+export class SemverRelease {
+    context: ConventionalChangelogWriter.Context;
+    commits: ICommit[];
+    commitStat: {
+        breakingChanges: number;
+        features: number;
+        fixes: number;
+    };
+
+    version: string;
+    newVersion: string;
+    additionalChangelog: string;
+
+    constructor() {
+    }
+
+    async fetch() {
+
+        var config;
+        var flags: any = {
+            infile: undefined,
+            outfile: undefined,
+            sameFile: undefined,
+            preset: undefined,
+            pkg: undefined,
+            append: undefined,
+            'release-count': undefined,
+            'skip-unstable': undefined,
+            outputUnreleased: undefined,
+            verbose: undefined,
+            config: undefined,
+            context: undefined,
+            lernaPackage: undefined,
+            tagPrefix: undefined,
+        };
+        var infile = flags.infile;
+        var outfile = flags.outfile;
+        var sameFile = flags.sameFile;
+        var append = flags.append;
+        var releaseCount = flags.releaseCount;
+        var skipUnstable = flags.skipUnstable;
+
+        if (infile && infile === outfile) {
+            sameFile = true;
+        } else if (sameFile) {
+            if (infile) {
+                outfile = infile;
+            } else {
+                console.error('infile must be provided if same-file flag presents.');
+                process.exit(1);
+            }
+        }
+
+        var options = _.omitBy({
+            preset: flags.preset,
+            pkg: {
+                path: flags.pkg,
+            },
+            append: append,
+            releaseCount: releaseCount,
+            skipUnstable: skipUnstable,
+            outputUnreleased: flags.outputUnreleased,
+            lernaPackage: flags.lernaPackage,
+            tagPrefix: flags.tagPrefix,
+        }, _.isUndefined);
+
+        if (flags.verbose) {
+            options.debug = console.info.bind(console);
+            options.warn = console.warn.bind(console);
+        }
+
+        var templateContext;
+
+        var outStream;
+
+        try {
+            if (flags.context) {
+                templateContext = require(resolve(process.cwd(), flags.context));
+            }
+
+            if (flags.config) {
+                config = require(resolve(process.cwd(), flags.config));
+                options.config = config;
+                options = _.merge(options, config.options);
+            } else {
+                config = {};
+            }
+        } catch (err) {
+            console.error('Failed to get file. ' + err);
+            process.exit(1);
+        }
+
+        var gitRawCommitsOpts = _.merge({}, config.gitRawCommitsOpts || {});
+        if (flags.commitPath) gitRawCommitsOpts.path = flags.commitPath;
+
+        var changelogStream = conventionalChangelog(options, templateContext, gitRawCommitsOpts, config.parserOpts, config.writerOpts);
+//     .on('error', function (err) {
+//         if (flags.verbose) {
+//             console.error(err.stack);
+//         } else {
+//             console.error(err.toString());
+//         }
+//         process.exit(1);
+//     });
+
+        function noInputFile() {
+            changelogStream.pipe(new LogWriter())
+            // if (outfile) {
+            //     outStream = fs.createWriteStream(outfile);
+            // } else {
+            //     outStream = process.stdout;
+            // }
+            //
+            // changelogStream
+            //     .pipe(outStream);
+        }
+
+        if (infile && releaseCount !== 0) {
+            var readStream = fs.createReadStream(infile)
+                               .on('error', function () {
+                                   if (flags.verbose) {
+                                       console.warn('infile does not exist.');
+                                   }
+
+                                   if (sameFile) {
+                                       noInputFile();
+                                   }
+                               });
+
+            if (sameFile) {
+                if (options.append) {
+                    changelogStream
+                        .pipe(fs.createWriteStream(outfile, {
+                            flags: 'a',
+                        }));
+                } else {
+                    var tmp = tempfile();
+
+                    changelogStream
+                        .pipe(addStream(readStream))
+                        .pipe(fs.createWriteStream(tmp))
+                        .on('finish', function () {
+                            fs.createReadStream(tmp)
+                              .pipe(fs.createWriteStream(outfile));
+                        });
+                }
+            } else {
+                if (outfile) {
+                    outStream = fs.createWriteStream(outfile);
+                } else {
+                    outStream = process.stdout;
+                }
+
+                var streamLocal;
+
+                if (options.append) {
+                    streamLocal = readStream
+                        .pipe(addStream(changelogStream));
+                } else {
+                    streamLocal = changelogStream
+                        .pipe(addStream(readStream));
+                }
+
+                streamLocal
+                    .pipe(outStream);
+            }
+        } else {
+            noInputFile();
+        }
+
+        function conventionalChangelog(options, context, gitRawCommitsOpts, parserOpts, writerOpts) {
+            options.warn = options.warn || function () {};
+
+            if (options.preset) {
+                try {
+                    options.config = conventionalChangelogPresetLoader(options.preset);
+                } catch (err) {
+                    if (typeof options.preset === 'object') {
+                        options.warn(`Preset: "${options.preset.name}" ${err.message}`);
+                    } else if (typeof options.preset === 'string') {
+                        options.warn(`Preset: "${options.preset}" ${err.message}`);
+                    } else {
+                        options.warn(`Preset: ${err.message}`);
+                    }
+                }
+            }
+
+            return conventionalChangelogCore(options, context, gitRawCommitsOpts, parserOpts, writerOpts);
+        }
+
+
+        return this.fetchPrivate(options, templateContext, gitRawCommitsOpts, config.parserOpts, config.writerOpts);
+    }
+
+    async fetchPrivate(options, initialContext, gitRawCommitsOpts, parserOpts, writerOpts, gitRawExecOpts?) {
+        const {commits, context} = await commitsAsArray(options, initialContext, gitRawCommitsOpts, parserOpts, writerOpts, gitRawExecOpts);
+        this.commits = commits;
+        this.context = context;
+        this.version = context.packageData.version;
+        this.newVersion = await this.calculateNextVersion();
+        this.additionalChangelog = await this.getAdditionalChangelog();
+    }
+
+    private calculateNextVersion(): string {
+        let breakingChanges = 0;
+        let features = 0;
+        let fixes = 0;
+
+        this.commits.forEach(commit => {
+            // console.log('commit', commit);
+            if (commit.type === 'fix') fixes++;
+            if (commit.type === 'feat') features++;
+            if (commit.notes.some(note => note.title.toUpperCase() === 'BREAKING CHANGE'))
+                breakingChanges++;
+        });
+
+        let nextVersion = this.version;
+        if (breakingChanges)
+            nextVersion = incrementVersion(this.version, 'major');
+        else if (features)
+            nextVersion = incrementVersion(this.version, 'minor');
+        else if (fixes)
+            nextVersion = incrementVersion(this.version, 'patch');
+
+        this.commitStat = {
+            breakingChanges,
+            features,
+            fixes,
+        };
+
+        return nextVersion;
+    }
+
+    private getAdditionalChangelog(): Promise<string> {
+        const nextContext = {
+            ...this.context,
+            version: this.newVersion,
+        };
+
+        return changelogByCommitArray(nextContext, this.commits);
+    }
+
+    async updateVersion() {
+        const content = readFileSync('./package.json').toString();
+        const json = JSON.parse(content);
+        if (json.version === this.newVersion)
+            return console.log('Version already updated');
+        json.version = this.newVersion;
+        writeFileSync('./package.json', JSON.stringify(json, null, 2));
+    }
+
+    async updateChangelog() {
+        const additional = this.additionalChangelog;
+        const content = readFileSync('./CHANGELOG.md').toString();
+        if (content.substr(0, additional.length) === additional)
+            return console.log('Changelog already updated');
+
+        writeFileSync('./CHANGELOG.md', [
+            additional,
+            content,
+        ].join('\n'));
+    }
+
+    async commit() {
+        await addToGit(['package.json', 'CHANGELOG.md']);
+
+        const versionTag = 'v' + this.newVersion;
+
+        const headHash = await getGitHead();
+        const tags = await getTags('HEAD');
+
+        if (tags.includes(versionTag)) {
+            const tagHash = await getTagHash(versionTag);
+            if (tagHash === headHash)
+                return console.log('Tag already created and already on head');
+            else
+                throw new Error(`Tag already exists but not on head. Can not update`);
+        }
+
+        await commit(`chore(release): ${this.newVersion}`);
+        await setVersionTag(this.newVersion);
+    }
+}
+

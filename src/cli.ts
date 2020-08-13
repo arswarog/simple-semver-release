@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-const {pick} = require('lodash');
+import { pick } from 'lodash';
+import { commandChangelog, commandCheck, commandCommit, commandPipeline, commandUpdateVersion } from './index';
 
-var argv = require('yargs')
+const argv = require('yargs')
     .usage('Usage: $0 <command> [options]')
     .demandCommand()
     .describe('verbose', 'Explain what is being done')
@@ -15,7 +16,7 @@ var argv = require('yargs')
             .positional('newVersion', {
                 describe: 'New version. Details in command update-version\'s help',
                 type: 'string',
-                default: 'auto'
+                default: 'auto',
             })
             .describe('all', 'Add all files in commit, not only package.json and CHANGELOG.md')
             .alias('a', 'all')
@@ -29,11 +30,13 @@ var argv = require('yargs')
                 fetch: true,
                 all: false,
                 push: false,
-                tag: true
+                tag: true,
             }),
-        configureHandler(['fetch', 'verbose'], args => {
-            console.log('Do pipeline', args);
-        })
+        configureHandler(
+            ['newVersion'],
+            ['fetch', 'verbose'],
+            commandPipeline,
+        ),
     )
     .command(
         'check',
@@ -43,9 +46,11 @@ var argv = require('yargs')
             .boolean('fetch')
             .hide('fetch')
             .default({fetch: true}),
-        configureHandler(['fetch', 'verbose'], args => {
-            console.log('Check', args);
-        })
+        configureHandler(
+            [],
+            ['fetch', 'verbose'],
+            commandCheck,
+        ),
     )
     .command(
         ['update-version [newVersion]', 'ver'],
@@ -54,63 +59,71 @@ var argv = require('yargs')
             .positional('newVersion', {
                 describe: 'New version. Can be auto, major, minor, patch or strict version',
                 type: 'string',
-                default: 'auto'
+                default: 'auto',
             })
-            .describe('force', 'Ignore check semantic versioning')
-            .describe('ro', 'Read only mode. Only show new version')
+            // .describe('force', 'Ignore check semantic versioning')
+            // .describe('print-only', 'Read only mode. Only show new version')
             .default({
                 force: false,
-                ro: false,
+                printOnly: false,
             })
+            .alias('p', 'print-only')
             .example('$0 update-version')
             .example('$0 update-version major')
             .example('$0 update-version 2.5.18-rc.1'),
-        configureHandler(['newVersion', 'force', 'ro'], args => {
-            console.log('Update to version', args);
-        }),
+        configureHandler(
+            ['newVersion'],
+            ['force', 'ro'],
+            commandUpdateVersion,
+        ),
     )
     .command(
         'changelog',
         'Update CHANGELOG.md',
         yargs => yargs
-            .describe('ro', 'Read only mode. Only show new changes')
+            // .describe('print-only', 'Read only mode. Only show new changes')
             .default({
-                ro: false
+                printOnly: false,
             }),
-        configureHandler(['ro'], args => {
-            console.log('Write changelog', args);
-        }),
+        configureHandler(
+            [],
+            ['printOnly'],
+            commandChangelog,
+        ),
     )
     .command(
         'commit',
         'Commit updates and set tag',
         yargs => yargs
-            .describe('all', 'Add all files in commit, not only package.json and CHANGELOG.md')
-            .alias('a', 'all')
-            .describe('push', 'Push to remote repository')
-            .describe('no-tag', 'Do not set tag')
+            // .describe('all', 'Add all files in commit, not only package.json and CHANGELOG.md')
+            // .alias('a', 'all')
+            // .describe('push', 'Push to remote repository')
+            // .describe('no-tag', 'Do not set tag')
             .default({
                 all: false,
                 push: false,
                 tag: true,
             }),
-        configureHandler(['all', 'push', 'tag'], args => {
-            console.log('Commit', args);
-        }),
+        configureHandler(
+            [],
+            ['all', 'push', 'tag'],
+            commandCommit,
+        ),
     )
     .argv;
 
-function configureHandler(argumentList, handler) {
+function configureHandler(argumentList: string[], optionList: string[], handler: (...args: any[]) => void) {
     return rawArgs => {
-        const args = pick(rawArgs, argumentList.concat(['verbose']));
+        const args = argumentList.map(key => rawArgs[key]);
+        const options = pick(rawArgs, argumentList.concat(['verbose']));
         let verbose = 0;
-        if (args.verbose) {
-            if (args.verbose === true)
+        if (options.verbose) {
+            if (options.verbose === true)
                 verbose = 1;
-            else if (Array.isArray(args.verbose))
-                verbose = args.verbose.length;
+            else if (Array.isArray(options.verbose))
+                verbose = options.verbose.length;
         }
-        args.verbose = verbose;
-        handler(args);
+        options.verbose = verbose;
+        handler(...args, options);
     };
 }
