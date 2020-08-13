@@ -1,35 +1,38 @@
 {
-  "name": "tmp",
+  "name": "simple-semver-release",
   "version": "0.0.1",
   "description": "",
-  "main": "src/index.js",
+  "main": "cli.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/arswarog/test.git"
   },
+  "bin": {
+    "simple-semver-release": "./cli.js"
+  },
   "scripts": {
+    "reinstal": "sudo npm un -g . && sudo npm i -g .",
     "test": "echo \"Tests ok\"",
-    "version": "conventional-changelog -i CHANGELOG.md -s && git add CHANGELOG.md",
+    "version": "conventional-changelog -i CHANGELOG.md -s",
     "commit": "git-cz",
-    "release": "semantic-release",
-    "increment": "node increment.js",
-    "start": "ts-node src/index"
+    "start": "ts-node src/index",
+    "cli": "node cli.js -h"
   },
   "author": "arswarog@yandex.ru",
   "license": "ISC",
   "dependencies": {
-    "conventional-changelog": "^3.1.21"
+    "conventional-changelog": "^3.1.21",
+    "yargs": "^15.4.1"
   },
   "devDependencies": {
-    "@semantic-release/git": "^9.0.0",
     "@types/conventional-changelog-writer": "^4.0.0",
     "@types/semver": "^7.3.1",
+    "@types/yargs": "^15.0.5",
     "commitizen": "^4.1.2",
     "commitlint": "^9.1.0",
     "conventional-changelog-cli": "^2.0.34",
     "cz-conventional-changelog": "3.2.0",
     "husky": "^4.2.5",
-    "semantic-release": "^17.1.1",
     "semver": "^7.3.2",
     "ts-node": "^8.10.2",
     "typescript": "^3.9.7"
