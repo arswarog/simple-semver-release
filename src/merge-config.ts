@@ -1,5 +1,16 @@
 'use strict';
 
+import * as github from './hosts/github.json';
+import * as gitlab from './hosts/gitlab.json';
+import * as bitbucket from './hosts/bitbucket.json';
+
+const hosts = {
+    github,
+    gitlab,
+    bitbucket,
+};
+
+
 var dateFormat = require('dateformat');
 var getPkgRepo = require('get-pkg-repo');
 var gitSemverTags = require('git-semver-tags');
@@ -227,7 +238,7 @@ export function mergeConfig(options, context, gitRawCommitsOpts, parserOpts, wri
                     }
 
                     if (type) {
-                        hostOpts = require('./hosts/' + type);
+                        hostOpts = hosts[type];
 
                         context = _.assign({
                             issue: hostOpts.issue,

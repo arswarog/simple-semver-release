@@ -1,3 +1,33 @@
+## 0.3.0 (2020-08-14)
+
+* Initial commit ([2435185](https://github.com/arswarog/test/commit/2435185))
+* feat: can increment version and add tag ([98dbd0f](https://github.com/arswarog/test/commit/98dbd0f))
+* feat(cli): cli MVP ([fc833e2](https://github.com/arswarog/test/commit/fc833e2))
+* feat(cli): create nice CLI using yargs ([6965513](https://github.com/arswarog/test/commit/6965513))
+* feat(package): add husky ([23691a9](https://github.com/arswarog/test/commit/23691a9))
+* feat(package): add ts-node and typescript ([7ab623e](https://github.com/arswarog/test/commit/7ab623e)), closes [#5](https://github.com/arswarog/test/issues/5) [#6](https://github.com/arswarog/test/issues/6)
+* feat(package): make it commitizen-friendly ([13ee381](https://github.com/arswarog/test/commit/13ee381))
+* chore(building): configure creating and linting for commits ([98ba529](https://github.com/arswarog/test/commit/98ba529))
+* chore(release): 0.1.0 ([0c3cd48](https://github.com/arswarog/test/commit/0c3cd48))
+
+
+
+
+## 0.2.0 (2020-08-14)
+
+* Initial commit ([2435185](https://github.com/arswarog/test/commit/2435185))
+* feat: can increment version and add tag ([98dbd0f](https://github.com/arswarog/test/commit/98dbd0f))
+* feat(cli): cli MVP ([fc833e2](https://github.com/arswarog/test/commit/fc833e2))
+* feat(cli): create nice CLI using yargs ([6965513](https://github.com/arswarog/test/commit/6965513))
+* feat(package): add husky ([23691a9](https://github.com/arswarog/test/commit/23691a9))
+* feat(package): add ts-node and typescript ([7ab623e](https://github.com/arswarog/test/commit/7ab623e)), closes [#5](https://github.com/arswarog/test/issues/5) [#6](https://github.com/arswarog/test/issues/6)
+* feat(package): make it commitizen-friendly ([13ee381](https://github.com/arswarog/test/commit/13ee381))
+* chore(building): configure creating and linting for commits ([0581b6a](https://github.com/arswarog/test/commit/0581b6a))
+* chore(release): 0.1.0 ([0c3cd48](https://github.com/arswarog/test/commit/0c3cd48))
+
+
+
+
 ## 0.1.0 (2020-08-13)
 
 * refactor(f2): rename f1 to f2 ([e117104](https://github.com/arswarog/test/commit/e117104))

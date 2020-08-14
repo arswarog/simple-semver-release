@@ -1,16 +1,4 @@
-#!/usr/bin/env node
-'use strict';
-
-import {
-    addToGit,
-    commit,
-    conventionalChangelogCore,
-    getGitHead, getTagHash,
-    getTagHead,
-    SemverRelease,
-    setVersionTag,
-} from './core';
-
+import { SemverRelease } from './core';
 
 const semverRelease = new SemverRelease();
 

@@ -1,42 +1,45 @@
 {
   "name": "simple-semver-release",
   "version": "0.1.0",
-  "description": "",
-  "main": "src/cli.js",
+  "description": "Simple semantic versioning for your project",
+  "main": "build/cli.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/arswarog/test.git"
   },
   "bin": {
-    "simple-semver-release": "src/cli.js"
+    "simple-semver-release": "build/cli.js"
   },
   "scripts": {
     "build": "tsc",
-    "reinstal": "sudo npm un -g . && sudo npm i -g .",
-    "test": "echo \"Tests ok\"",
-    "version": "conventional-changelog -i CHANGELOG.md -s",
+    "test": "exit 0",
+    "reinstall": "sudo npm un -g . && sudo npm i -g .",
     "commit": "git-cz",
     "prestart": "npm run build",
     "start": "node build/cli.js -vv",
     "cli": "node build/cli.js -h"
   },
   "author": "arswarog@yandex.ru",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "conventional-changelog": "^3.1.21",
+    "conventional-changelog-cli": "^2.0.34",
+    "conventional-changelog-writer": "^4.0.17",
+    "execa": "^4.0.3",
+    "lodash": "^4.17.20",
+    "semver": "^7.3.2",
     "yargs": "^15.4.1"
   },
   "devDependencies": {
+    "@commitlint/cli": "^9.1.1",
+    "@commitlint/config-conventional": "^9.1.1",
     "@types/conventional-changelog-writer": "^4.0.0",
     "@types/semver": "^7.3.1",
     "@types/yargs": "^15.0.5",
     "commitizen": "^4.1.2",
     "commitlint": "^9.1.0",
-    "conventional-changelog-cli": "^2.0.34",
-    "cz-conventional-changelog": "3.2.0",
+    "git-cz": "^4.7.0",
     "husky": "^4.2.5",
-    "semver": "^7.3.2",
-    "ts-node": "^8.10.2",
     "typescript": "^3.9.7"
   },
   "config": {
@@ -47,7 +50,7 @@
   "husky": {
     "hooks": {
       "pre-commit": "npm test",
-      "-commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
     }
   }
 }

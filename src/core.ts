@@ -3,7 +3,6 @@ import { ReleaseType, inc as incrementVersion } from 'semver';
 var conventionalChangelogPresetLoader = require('conventional-changelog-preset-loader');
 
 var fs = require('fs');
-var meow = require('meow');
 var tempfile = require('tempfile');
 var resolve = require('path').resolve;
 
