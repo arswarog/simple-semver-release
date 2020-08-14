@@ -1,6 +1,6 @@
 {
   "name": "simple-semver-release",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Simple semantic versioning for your project",
   "main": "build/cli.js",
   "repository": {
