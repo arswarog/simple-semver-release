@@ -5,7 +5,7 @@
   "main": "build/cli.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/arswarog/test.git"
+    "url": "https://github.com/arswarog/simple-semver-release.git"
   },
   "bin": {
     "simple-semver-release": "build/cli.js"
@@ -16,8 +16,12 @@
     "reinstall": "sudo npm un -g . && sudo npm i -g .",
     "commit": "git-cz",
     "prestart": "npm run build",
-    "start": "node build/cli.js -vv",
-    "cli": "node build/cli.js -h"
+    "start": "node build/cli.js release -VV",
+    "cli": "node build/cli.js -h",
+    "predeploy": "yarn run build",
+    "deploy": "yarn publish",
+    "prefunc": "tsc",
+    "func": "node build/functions.js"
   },
   "author": "arswarog@yandex.ru",
   "license": "MIT",
@@ -25,8 +29,15 @@
     "conventional-changelog": "^3.1.21",
     "conventional-changelog-cli": "^2.0.34",
     "conventional-changelog-writer": "^4.0.17",
+    "dateformat": "^3.0.3",
     "execa": "^4.0.3",
+    "get-pkg-repo": "^4.1.1",
+    "git-remote-origin-url": "^3.1.0",
+    "git-semver-tags": "^4.1.0",
     "lodash": "^4.17.20",
+    "normalize-package-data": "^2.5.0",
+    "q": "^1.5.1",
+    "read-pkg-up": "^7.0.1",
     "semver": "^7.3.2",
     "yargs": "^15.4.1"
   },
@@ -34,6 +45,10 @@
     "@commitlint/cli": "^9.1.1",
     "@commitlint/config-conventional": "^9.1.1",
     "@types/conventional-changelog-writer": "^4.0.0",
+    "@types/conventional-commits-parser": "^3.0.0",
+    "@types/git-raw-commits": "^2.0.0",
+    "@types/git-semver-tags": "^3.0.0",
+    "@types/lodash": "^4.14.159",
     "@types/semver": "^7.3.1",
     "@types/yargs": "^15.0.5",
     "commitizen": "^4.1.2",

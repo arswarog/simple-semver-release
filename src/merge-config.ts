@@ -1,13 +1,63 @@
 'use strict';
 
-import * as github from './hosts/github.json';
-import * as gitlab from './hosts/gitlab.json';
-import * as bitbucket from './hosts/bitbucket.json';
-
 const hosts = {
-    github,
-    gitlab,
-    bitbucket,
+    github: {
+        'issue': 'issues',
+        'commit': 'commit',
+        'referenceActions': [
+            'close',
+            'closes',
+            'closed',
+            'fix',
+            'fixes',
+            'fixed',
+            'resolve',
+            'resolves',
+            'resolved',
+        ],
+        'issuePrefixes': [
+            '#',
+            'gh-',
+        ],
+    },
+    gitlab: {
+        'issue': 'issues',
+        'commit': 'commit',
+        'referenceActions': [
+            'close',
+            'closes',
+            'closed',
+            'closing',
+            'fix',
+            'fixes',
+            'fixed',
+            'fixing',
+        ],
+        'issuePrefixes': [
+            '#',
+        ],
+    },
+    bitbucket: {
+        'issue': 'issue',
+        'commit': 'commits',
+        'referenceActions': [
+            'close',
+            'closes',
+            'closed',
+            'closing',
+            'fix',
+            'fixes',
+            'fixed',
+            'fixing',
+            'resolve',
+            'resolves',
+            'resolved',
+            'resolving',
+        ],
+        'issuePrefixes': [
+            '#',
+        ],
+    },
 };
 
 

@@ -166,6 +166,11 @@
   resolved "http://localhost:4873/@commitlint%2ftypes/-/types-9.1.1.tgz#d97ebc35d20eed6d8458361cbca5c7cb85d45184"
   integrity sha512-SXY8bCQ1qacJ8AUTUxjabY8G6OjSmMPLN9MBCzGaKOjpPNX6z8zbXTbk9oU3GHZLtcxweWLCi2n49IRS4iQlwg==
 
+"@hutson/parse-repository-url@^3.0.0":
+  version "3.0.2"
+  resolved "http://localhost:4873/@hutson%2fparse-repository-url/-/parse-repository-url-3.0.2.tgz#98c23c950a3d9b6c8f0daed06da6c3af06981340"
+  integrity sha512-H9XAx3hc0BQHY6l+IFSWHDySypcXsvsuLhgYLUGywmJ5pswRVQJUHpOsobnLYp2ZUaUlKiKDrgWWhosOwAEM8Q==
+
 "@types/color-name@^1.1.1":
   version "1.1.1"
   resolved "http://localhost:4873/@types%2fcolor-name/-/color-name-1.1.1.tgz#1c1261bbeaa10a8055bbc5d8ab84b7b2afc846a0"
@@ -179,12 +184,29 @@
     "@types/conventional-commits-parser" "*"
     "@types/node" "*"
 
-"@types/conventional-commits-parser@*":
+"@types/conventional-commits-parser@*", "@types/conventional-commits-parser@^3.0.0":
   version "3.0.0"
   resolved "http://localhost:4873/@types%2fconventional-commits-parser/-/conventional-commits-parser-3.0.0.tgz#91227c309cf3308207634b22895787ffc3b68f6a"
   integrity sha512-l1gxdN92fUcPfN9/5r4YAVhxQXaVKq8W727QIFEBhlm9rXymKlVpeMVgdvV6Thr0FCt9Kn4fl9f78BXqIsST/g==
   dependencies:
     "@types/node" "*"
+
+"@types/git-raw-commits@^2.0.0":
+  version "2.0.0"
+  resolved "http://localhost:4873/@types%2fgit-raw-commits/-/git-raw-commits-2.0.0.tgz#157e9e4709db0748fb1aa623f8927ddd4864bac6"
+  integrity sha512-sHXOKjKqu1kQxbxkZiz2s0yx2kc7g20g6tE98LYGq5jQyT9r+GRyTn19NBfPotOlXhGO6oPvYT3tdnPl8MYYyA==
+  dependencies:
+    "@types/node" "*"
+
+"@types/git-semver-tags@^3.0.0":
+  version "3.0.0"
+  resolved "http://localhost:4873/@types%2fgit-semver-tags/-/git-semver-tags-3.0.0.tgz#1a15b30ca284dbb2e334e874e081a3726bbb83ef"
+  integrity sha512-OmB4TFmz1QRzrPNC7B0olpABj43/XbVI9E40sKH19YnrgM4+UmHV2JGVjaM4r4J2axwDhprURVrMcBoYKNya5A==
+
+"@types/lodash@^4.14.159":
+  version "4.14.159"
+  resolved "http://localhost:4873/@types%2flodash/-/lodash-4.14.159.tgz#61089719dc6fdd9c5cb46efc827f2571d1517065"
+  integrity sha512-gF7A72f7WQN33DpqOWw9geApQPh4M3PxluMtaHxWHXEGSN12/WbcEk/eNSqWNQcQhF66VSZ06vCF94CrHwXJDg==
 
 "@types/minimist@^1.2.0":
   version "1.2.0"
@@ -814,7 +836,7 @@ dargs@^7.0.0:
   resolved "http://localhost:4873/dargs/-/dargs-7.0.0.tgz#04015c41de0bcb69ec84050f3d9be0caf8d6d5cc"
   integrity sha512-2iy1EkLdlBzQGvbweYRFxmFath8+K7+AKB0TlhHWkNuH+TmovaMH/Wp7V7R4u7f4SnX3OgLsU9t1NI9ioDnUpg==
 
-dateformat@^3.0.0:
+dateformat@^3.0.0, dateformat@^3.0.3:
   version "3.0.3"
   resolved "http://localhost:4873/dateformat/-/dateformat-3.0.3.tgz#a6e37499a4d9a9cf85ef5872044d62901c9889ae"
   integrity sha512-jyCETtSl3VMZMWeRo7iY1FL19ges1t55hMo5yaam4Jrsm5EPL89UQkoQRyiI+Yf4k8r2ZpdngkV8hr1lIdjb3Q==
@@ -1104,6 +1126,16 @@ get-pkg-repo@^1.0.0:
     parse-github-repo-url "^1.3.0"
     through2 "^2.0.0"
 
+get-pkg-repo@^4.1.1:
+  version "4.1.1"
+  resolved "http://localhost:4873/get-pkg-repo/-/get-pkg-repo-4.1.1.tgz#699422f552b71b9f8aa41529ce7923ce7f271d79"
+  integrity sha512-CReGtqeJoY02L5vzok3jX1Le3sxqeAOrCnd75r/M4u4aSBT9KK7KevnpGulsJxP2NOnuIwnWPJ5XcLxTwBFzZg==
+  dependencies:
+    "@hutson/parse-repository-url" "^3.0.0"
+    hosted-git-info "^2.1.4"
+    meow "^7.0.0"
+    through2 "^2.0.0"
+
 get-stdin@7.0.0:
   version "7.0.0"
   resolved "http://localhost:4873/get-stdin/-/get-stdin-7.0.0.tgz#8d5de98f15171a125c5e516643c7a6d0ea8a96f6"
@@ -1161,6 +1193,13 @@ git-remote-origin-url@^2.0.0:
     gitconfiglocal "^1.0.0"
     pify "^2.3.0"
 
+git-remote-origin-url@^3.1.0:
+  version "3.1.0"
+  resolved "http://localhost:4873/git-remote-origin-url/-/git-remote-origin-url-3.1.0.tgz#c90c1cb0f66658566bbc900509ab093a1522d2b3"
+  integrity sha512-yVSfaTMO7Bqk6Xx3696ufNfjdrajX7Ig9GuAeO2V3Ji7stkDoBNFldnWIAsy0qviUd0Z+X2P6ziJENKztW7cBQ==
+  dependencies:
+    gitconfiglocal "^2.1.0"
+
 git-semver-tags@^4.0.0:
   version "4.0.0"
   resolved "http://localhost:4873/git-semver-tags/-/git-semver-tags-4.0.0.tgz#a9dd58a0dd3561a4a9898b7e9731cf441c98fc38"
@@ -1169,10 +1208,25 @@ git-semver-tags@^4.0.0:
     meow "^7.0.0"
     semver "^6.0.0"
 
+git-semver-tags@^4.1.0:
+  version "4.1.0"
+  resolved "http://localhost:4873/git-semver-tags/-/git-semver-tags-4.1.0.tgz#0146c9bc24ee96104c99f443071c8c2d7dc848e3"
+  integrity sha512-TcxAGeo03HdErzKzi4fDD+xEL7gi8r2Y5YSxH6N2XYdVSV5UkBwfrt7Gqo1b+uSHCjy/sa9Y6BBBxxFLxfbhTg==
+  dependencies:
+    meow "^7.0.0"
+    semver "^6.0.0"
+
 gitconfiglocal@^1.0.0:
   version "1.0.0"
   resolved "http://localhost:4873/gitconfiglocal/-/gitconfiglocal-1.0.0.tgz#41d045f3851a5ea88f03f24ca1c6178114464b9b"
   integrity sha1-QdBF84UaXqiPA/JMocYXgRRGS5s=
+  dependencies:
+    ini "^1.3.2"
+
+gitconfiglocal@^2.1.0:
+  version "2.1.0"
+  resolved "http://localhost:4873/gitconfiglocal/-/gitconfiglocal-2.1.0.tgz#07c28685c55cc5338b27b5acbcfe34aeb92e43d1"
+  integrity sha512-qoerOEliJn3z+Zyn1HW2F6eoYJqKwS6MgC9cztTLUB/xLWX8gD/6T60pKn4+t/d6tP7JlybI7Z3z+I572CR/Vg==
   dependencies:
     ini "^1.3.2"
 

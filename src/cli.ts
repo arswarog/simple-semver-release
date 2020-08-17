@@ -1,16 +1,27 @@
 #!/usr/bin/env node
-import { pick } from 'lodash';
-import { commandChangelog, commandCheck, commandCommit, commandPipeline, commandUpdateVersion } from './index';
+const path = require('path');
+const {pick} = require('lodash');
+
+const {
+    commandChangelog,
+    commandCheck,
+    commandCommit,
+    commandRelease,
+    commandUpdateVersion,
+} = require('./index');
+// } = require(path.resolve(__dirname, './index'));
+
 
 const argv = require('yargs')
     .usage('Usage: $0 <command> [options]')
     .demandCommand()
     .describe('verbose', 'Explain what is being done')
-    .alias('v', 'verbose')
+    .alias('V', 'verbose')
+    .alias('v', 'version')
     .help('help').alias('h', 'help')
     .epilog('Copyright 2019 by Arswarog')
     .command(
-        '$0 [newVersion]',
+        'release [newVersion]',
         'Update version, update changelog, add and commit changes',
         yargs => yargs
             .positional('newVersion', {
@@ -35,7 +46,7 @@ const argv = require('yargs')
         configureHandler(
             ['newVersion'],
             ['fetch', 'verbose'],
-            commandPipeline,
+            commandRelease,
         ),
     )
     .command(

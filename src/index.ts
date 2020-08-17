@@ -1,33 +1,55 @@
-import { SemverRelease } from './core';
+import { printLog } from './log';
+import { SemverRelease } from './semver-release';
 
-const semverRelease = new SemverRelease();
-
-export async function commandPipeline(newVersion: string, {verbose, fetch}: {
+export async function commandRelease(newVersion: string, options: {
     fetch: boolean,
     verbose: number
 }) {
-    console.log('processPipeline', newVersion);
+    console.log('processRelease', newVersion);
 
-    await commandCheck({verbose} as any);
-    await commandUpdateVersion(newVersion, {verbose} as any);
-    await commandChangelog({verbose} as any);
-    await commandCommit({verbose} as any);
+    const semverRelease = new SemverRelease(options);
+    if (!await semverRelease.setVersion(newVersion)) {
+        return console.log(`Nothing to do: already released`);
+    }
+    await semverRelease.runReleasePipeline(options);
 }
 
-export async function commandCheck(options: { fetch: boolean, verbose: number }) {
-    if (!semverRelease.version)
-        await semverRelease.fetch();
+export async function commandCheck({fetch, verbose}: { fetch: boolean, verbose: number }) {
+    const semverRelease = new SemverRelease({verbose});
+
+    await semverRelease.refresh(true);
+
+    const log = printLog(verbose);
+    log(1, 'Starting command "check"');
+    log(2, 'Fetching complete');
+    console.log(`Project root: ${semverRelease.projectRoot}`);
     console.log(`Current version: ${semverRelease.version}`);
-    console.log(`New version: ${semverRelease.newVersion}`);
-    console.log(`Diff: ${semverRelease.commits.length} commits`);
-    console.log(`  Fixes: ${semverRelease.commitStat.fixes}`);
-    console.log(`  Features: ${semverRelease.commitStat.features}`);
-    console.log(`  BreakingChanges: ${semverRelease.commitStat.breakingChanges}`);
+    if (!semverRelease.newVersion || semverRelease.newVersion === semverRelease.recommendedNewVersion)
+        console.log(`Next release: ${semverRelease.newVersion}`);
+    else
+        console.log(`Next release: ${semverRelease.newVersion} (recommended ${semverRelease.recommendedNewVersion})`);
+
+    if (semverRelease.alreadyReleased)
+        console.log('!!! Already released');
+
+    if (semverRelease.releases.length)
+        console.log(`Latest releases: ${semverRelease.releases.slice(0, 3).join(', ')}`);
+    else
+        console.log(`Releases: no releases`);
+    if (semverRelease.commits) {
+        console.log(`After last release: ${semverRelease.commits.length} commits`);
+        console.log(`  Chore: ${semverRelease.commitStat.chores}`);
+        console.log(`  Fixes: ${semverRelease.commitStat.fixes}`);
+        console.log(`  Features: ${semverRelease.commitStat.features}`);
+        console.log(`  BreakingChanges: ${semverRelease.commitStat.breakingChanges}`);
+        console.log(`  Other: ${semverRelease.commitStat.other}`);
+    } else
+        console.log(`Diff: commits not loaded`);
 }
 
 export async function commandUpdateVersion(newVersion: string, {force, printOnly, verbose}: { force: boolean, printOnly: boolean, verbose: number }) {
-    if (!semverRelease.version)
-        await semverRelease.fetch();
+    const semverRelease = new SemverRelease({verbose});
+
     if (newVersion && newVersion !== 'auto')
         semverRelease.newVersion = newVersion;
 
@@ -37,15 +59,18 @@ export async function commandUpdateVersion(newVersion: string, {force, printOnly
     if (verbose)
         console.log(`Update version in package.json: from ${semverRelease.version} to ${semverRelease.newVersion}`);
 
-    await semverRelease.updateVersion();
+    if (!await semverRelease.setVersion(newVersion)) {
+        return console.log(`Nothing to do: already released`);
+    }
+    await semverRelease.updatePkgVersion();
 
     if (verbose)
         console.log(`Done`);
 }
 
 export async function commandChangelog({verbose, printOnly}: { printOnly: boolean, verbose: number }) {
-    if (!semverRelease.version)
-        await semverRelease.fetch();
+    const semverRelease = new SemverRelease({verbose});
+
     const log = printLog(verbose);
     const changelog = semverRelease.additionalChangelog;
     if (printOnly)
@@ -57,17 +82,10 @@ export async function commandChangelog({verbose, printOnly}: { printOnly: boolea
 }
 
 export async function commandCommit({verbose}: { push: boolean, tag: boolean, verbose: number }) {
+    const semverRelease = new SemverRelease({verbose});
+
     const log = printLog(verbose);
 
-    if (!semverRelease.version)
-        await semverRelease.fetch();
     console.log(semverRelease.newVersion);
     await semverRelease.commit();
-}
-
-function printLog(verbose: number) {
-    return (level: number, message: string) => {
-        if (verbose >= level)
-            console.log(`LOG: ${message}`);
-    };
 }

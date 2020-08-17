@@ -12,6 +12,7 @@ const gitRawCommits = require('git-raw-commits');
 const conventionalCommitsParser = require('conventional-commits-parser');
 import { readFileSync, writeFileSync } from 'fs';
 import * as ConventionalChangelogWriter from 'conventional-changelog-writer';
+import { printLog } from './log';
 
 const execa = require('execa');
 
@@ -21,23 +22,8 @@ const through = require('through2');
 const shell = require('shelljs');
 
 import { mergeConfig } from './merge-config';
-
-export interface ICommit {
-    type: string;
-    scope: string;
-    subject: string;
-    merge: null,
-    header: string;
-    body: string;
-    footer: string
-    notes: { title: string, text: string }[];
-    references: any[],
-    mentions: any[],
-    revert: null,
-    hash: string;
-    gitTags: string;
-    committerDate: string;
-}
+import { gitCommit, gitGetTags } from './git';
+import { ICommit } from './types';
 
 class LogWriter extends Writable {
     _write(chunk, encoding, callback) {
@@ -52,7 +38,7 @@ export async function setVersionTag(version: string) {
         const tag = 'v' + version;
 
         const headHash = await getGitHead();
-        const tags = await getTags('HEAD');
+        const tags = await gitGetTags('HEAD');
         if (tags.includes(tag)) {
             console.log('Tag already exists');
             throw new Error(`Tag "${tag}" already exists`);
@@ -66,25 +52,8 @@ export async function addToGit(files: string[], execaOptions?) {
     await execa('git', ['add', ...files], execaOptions);
 }
 
-export async function commit(message: string, execaOptions?) {
-    await execa('git', ['commit', '-m', message], execaOptions);
-}
-
 export async function setTag(tagName, execaOptions?) {
     await execa('git', ['tag', tagName], execaOptions);
-}
-
-async function getTags(branch?: string, execaOptions?) {
-    return (await execa(
-        'git',
-        branch
-            ? ['tag', '--merged', branch]
-            : ['tag'],
-        execaOptions,
-    )).stdout
-      .split('\n')
-      .map((tag) => tag.trim())
-      .filter(Boolean);
 }
 
 export async function getGitHead(execaOptions?) {
@@ -249,6 +218,7 @@ export function commitsAsArray(options, context, gitRawCommitsOpts, parserOpts, 
                     })
                     .on('finish', () => {
                         commits.reverse();
+                        console.log(`load commits ${commits.length}`);
                         resolve({commits, context});
                     });
             });
@@ -324,6 +294,7 @@ export function conventionalChangelogCore(options, context, gitRawCommitsOpts, p
                     const from = i > 0
                         ? reverseTags[i - 1]
                         : '';
+                    console.log('from-to', from, to)
                     return commitsRange(from, to);
                 });
 
@@ -433,8 +404,10 @@ export class SemverRelease {
     constructor() {
     }
 
-    async fetch() {
+    async fetch({verbose}: { verbose: number }) {
+        const log = printLog(verbose);
 
+        log(2, 'pprepare');
         var config;
         var flags: any = {
             infile: undefined,
@@ -459,6 +432,8 @@ export class SemverRelease {
         var releaseCount = flags.releaseCount;
         var skipUnstable = flags.skipUnstable;
 
+        log(2, 'prepare');
+
         if (infile && infile === outfile) {
             sameFile = true;
         } else if (sameFile) {
@@ -469,6 +444,7 @@ export class SemverRelease {
                 process.exit(1);
             }
         }
+        log(2, 'prepare 2');
 
         var options = _.omitBy({
             preset: flags.preset,
@@ -483,15 +459,16 @@ export class SemverRelease {
             tagPrefix: flags.tagPrefix,
         }, _.isUndefined);
 
-        if (flags.verbose) {
-            options.debug = console.info.bind(console);
-            options.warn = console.warn.bind(console);
-        }
+        // if (verbose >= 2) {
+        //     options.debug = console.info.bind(console);
+        //     options.warn = console.warn.bind(console);
+        // }
 
         var templateContext;
 
         var outStream;
 
+        log(2, 'prepare 3');
         try {
             if (flags.context) {
                 templateContext = require(resolve(process.cwd(), flags.context));
@@ -508,6 +485,7 @@ export class SemverRelease {
             console.error('Failed to get file. ' + err);
             process.exit(1);
         }
+        log(2, 'prepare 4');
 
         var gitRawCommitsOpts = _.merge({}, config.gitRawCommitsOpts || {});
         if (flags.commitPath) gitRawCommitsOpts.path = flags.commitPath;
@@ -521,9 +499,10 @@ export class SemverRelease {
 //         }
 //         process.exit(1);
 //     });
+        log(2, 'changelogStream');
 
         function noInputFile() {
-            changelogStream.pipe(new LogWriter())
+            changelogStream.pipe(new LogWriter());
             // if (outfile) {
             //     outStream = fs.createWriteStream(outfile);
             // } else {
@@ -535,6 +514,8 @@ export class SemverRelease {
         }
 
         if (infile && releaseCount !== 0) {
+
+            log(2, 'createReadStream');
             var readStream = fs.createReadStream(infile)
                                .on('error', function () {
                                    if (flags.verbose) {
@@ -545,6 +526,8 @@ export class SemverRelease {
                                        noInputFile();
                                    }
                                });
+
+            log(2, 'createWriteStream');
 
             if (sameFile) {
                 if (options.append) {
@@ -564,6 +547,7 @@ export class SemverRelease {
                         });
                 }
             } else {
+                log(2, '6546');
                 if (outfile) {
                     outStream = fs.createWriteStream(outfile);
                 } else {
@@ -584,6 +568,7 @@ export class SemverRelease {
                     .pipe(outStream);
             }
         } else {
+            log(2, 'ghjgjgh');
             noInputFile();
         }
 
@@ -607,12 +592,12 @@ export class SemverRelease {
             return conventionalChangelogCore(options, context, gitRawCommitsOpts, parserOpts, writerOpts);
         }
 
-
         return this.fetchPrivate(options, templateContext, gitRawCommitsOpts, config.parserOpts, config.writerOpts);
     }
 
     async fetchPrivate(options, initialContext, gitRawCommitsOpts, parserOpts, writerOpts, gitRawExecOpts?) {
         const {commits, context} = await commitsAsArray(options, initialContext, gitRawCommitsOpts, parserOpts, writerOpts, gitRawExecOpts);
+        console.log(`commits loaded ${commits.length}`);
         this.commits = commits;
         this.context = context;
         this.version = context.packageData.version;
@@ -686,7 +671,7 @@ export class SemverRelease {
         const versionTag = 'v' + this.newVersion;
 
         const headHash = await getGitHead();
-        const tags = await getTags('HEAD');
+        const tags = await gitGetTags('HEAD');
 
         if (tags.includes(versionTag)) {
             const tagHash = await getTagHash(versionTag);
@@ -696,7 +681,7 @@ export class SemverRelease {
                 throw new Error(`Tag already exists but not on head. Can not update`);
         }
 
-        await commit(`chore(release): ${this.newVersion}`);
+        await gitCommit(`chore(release): ${this.newVersion}`);
         await setVersionTag(this.newVersion);
     }
 }
