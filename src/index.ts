@@ -1,4 +1,3 @@
-import { printLog } from './log';
 import { SemverRelease } from './semver-release';
 
 export async function commandRelease(newVersion: string, options: {
@@ -19,9 +18,8 @@ export async function commandCheck({fetch, verbose}: { fetch: boolean, verbose: 
 
     await semverRelease.refresh(true);
 
-    const log = printLog(verbose);
-    log(1, 'Starting command "check"');
-    log(2, 'Fetching complete');
+    semverRelease.log(1, 'Starting command "check"');
+    semverRelease.log(2, 'Fetching complete');
     console.log(`Project root: ${semverRelease.projectRoot}`);
     console.log(`Current version: ${semverRelease.version}`);
     if (!semverRelease.newVersion || semverRelease.newVersion === semverRelease.recommendedNewVersion)
@@ -71,20 +69,17 @@ export async function commandUpdateVersion(newVersion: string, {force, printOnly
 export async function commandChangelog({verbose, printOnly}: { printOnly: boolean, verbose: number }) {
     const semverRelease = new SemverRelease({verbose});
 
-    const log = printLog(verbose);
-    const changelog = semverRelease.additionalChangelog;
+    const changelog = await semverRelease.generateAdditionalChangelog()
     if (printOnly)
         return console.log('Additional changelog:\n' + changelog);
 
-    log(2, 'Writing changelog');
-    semverRelease.updateChangelog();
-    log(2, 'Done');
+    semverRelease.log(2, 'Writing changelog');
+    semverRelease.updateAdditionalChangelog();
+    semverRelease.log(2, 'Done');
 }
 
 export async function commandCommit({verbose}: { push: boolean, tag: boolean, verbose: number }) {
     const semverRelease = new SemverRelease({verbose});
-
-    const log = printLog(verbose);
 
     console.log(semverRelease.newVersion);
     await semverRelease.commit();

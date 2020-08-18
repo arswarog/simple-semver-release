@@ -1,15 +1,18 @@
 import * as execa from 'execa';
 import * as gitSemverTags from 'git-semver-tags';
-import * as ConventionalChangelogWriter from 'conventional-changelog-writer';
 import * as ConventionalCommitsParser from 'conventional-commits-parser';
 import * as gitRawCommits from 'git-raw-commits';
-import { Commit } from 'conventional-commits-parser';
 import { ICommit } from './types';
+import * as shell from 'shelljs';
 
 const format = '%B%n-hash-%n%H%n-gitTags-%n%d%n-committerDate-%n%ci';
 
 export async function gitCommit(message: string, execaOptions?) {
     await execa('git', ['commit', '-m', message], execaOptions);
+}
+
+export async function getTagHash(tag: string, execaOptions?) {
+    return (await execa('git', ['rev-parse', tag], execaOptions)).stdout;
 }
 
 export async function gitGetTags(branch?: string, execaOptions?) {
@@ -79,4 +82,26 @@ export function gitGetCommitsRange(from, to): Promise<ICommit[]> {
                 console.log('finish', data);
             });
     });
+}
+
+export async function gitSetTag(tagName, execaOptions?) {
+    await execa('git', ['tag', tagName], execaOptions);
+}
+
+export async function gitSetVersionTag(version: string) {
+    if (shell.exec('git rev-parse --verify HEAD', {silent: true}).code === 0) {
+        const tag = 'v' + version;
+
+        const tags = await gitGetTags('HEAD');
+        if (tags.includes(tag)) {
+            console.log('Tag already exists');
+            throw new Error(`Tag "${tag}" already exists`);
+        }
+
+        await gitSetTag(tag);
+    }
+}
+
+export async function gitAddToIndex(files: string[], execaOptions?) {
+    await execa('git', ['add', ...files], execaOptions);
 }

@@ -1,25 +1,23 @@
 import * as ConventionalChangelogWriter from 'conventional-changelog-writer';
 import { dirname } from 'path';
 import {
-    addToGit,
-    changelogByCommitArray,
-    commitsAsArray,
-    getGitHead,
-    getTagHash,
-    setVersionTag,
-} from './core';
-import {
     inc as incrementVersion,
     valid as semverValid,
     gt as semverGt,
 } from 'semver';
 import { readFileSync, writeFileSync } from 'fs';
-import { gitGetCommitsRange, gitCommit, gitGetSemverTag, gitGetTags } from './git';
+import {
+    gitGetCommitsRange,
+    gitCommit,
+    gitGetSemverTag,
+    gitGetTags,
+    gitSetVersionTag,
+    gitAddToIndex,
+    getTagHash,
+} from './git';
 import semver = require('semver/preload');
 import { ICommit } from './types';
 import * as readPkgUp from 'read-pkg-up';
-import { commandChangelog, commandCheck, commandCommit, commandUpdateVersion } from './index';
-import { changelogByCommits } from './functions';
 import { merge } from 'lodash';
 import { Readable } from 'stream';
 import conventionalChangelogWriter = require('conventional-changelog-writer');
@@ -117,14 +115,14 @@ export class SemverRelease {
         writeFileSync('./package.json', JSON.stringify(json, null, 2));
     }
 
-    private async generateAdditionalChangelog(): Promise<string> {
+    public async generateAdditionalChangelog(): Promise<string> {
         this.log(1, 'Generate additional changelog...');
         this.additionalChangelog = await this.changelogByCommits(this.commits);
         this.log(1, `Generate additional changelog complete (${this.additionalChangelog.trim().split('\n').length} lines)`);
         return this.additionalChangelog;
     }
 
-    private async updateAdditionalChangelog(): Promise<void> {
+    public async updateAdditionalChangelog(): Promise<void> {
         this.log(1, 'Update additional changelog...');
         const trimmedCurrent = this.currentChangelog.trim();
         const trimmedAdditional = this.additionalChangelog.trim();
@@ -135,33 +133,15 @@ export class SemverRelease {
         this.log(1, `Update additional changelog complete (${changelog.trim().split('\n').length} lines)`);
     }
 
-    /**
-     * RAW
-     */
-    async updateChangelog() {
-        const additional = this.additionalChangelog;
-        const content = readFileSync('./CHANGELOG.md').toString();
-        if (content.substr(0, additional.length) === additional)
-            return console.log('Changelog already updated');
-
-        writeFileSync('./CHANGELOG.md', [
-            additional,
-            content,
-        ].join('\n'));
-    }
-
-    /**
-     * RAW
-     */
     async commit() {
         this.log(1, 'Commit changes');
         this.log(2, ' Add files to git index');
-        await addToGit(['package.json', 'CHANGELOG.md']);
+        await gitAddToIndex(['package.json', 'CHANGELOG.md']);
 
         this.log(2, ' Check tag');
         const versionTag = 'v' + this.newVersion;
 
-        const headHash = await getGitHead();
+        const headHash = await getTagHash('HEAD');
         const tags = await gitGetTags('HEAD');
 
         if (tags.includes(versionTag)) {
@@ -175,7 +155,7 @@ export class SemverRelease {
         this.log(2, ' Commit changes');
         await gitCommit(`chore(release): ${this.newVersion}`);
         this.log(2, ' Set tag');
-        await setVersionTag(this.newVersion);
+        await gitSetVersionTag(this.newVersion);
     }
 
     private analizeCommits() {
@@ -218,7 +198,7 @@ export class SemverRelease {
             nextVersion = incrementVersion(this.version, 'major');
         else if (stats.features)
             nextVersion = incrementVersion(this.version, 'minor');
-        else if (stats.fixes)
+        else
             nextVersion = incrementVersion(this.version, 'patch');
 
         this.commitStat = stats;

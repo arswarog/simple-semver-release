@@ -1,9 +1,6 @@
 import { Readable } from 'stream';
 import { merge } from 'lodash';
 import * as ConventionalChangelogWriter from 'conventional-changelog-writer';
-import { Commit } from 'conventional-commits-parser';
-import gitSemverTags = require('git-semver-tags');
-import * as ReadPkgUp from 'read-pkg-up';
 import { gitGetCommitsRange, gitGetSemverTag } from './git';
 import { ICommit } from './types';
 
