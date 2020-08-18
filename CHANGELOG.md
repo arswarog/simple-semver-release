@@ -1,3 +1,9 @@
+## <small>0.2.1 (2020-08-18)</small>
+
+* fix(release pipeline): update pkg, version, changelog and commit baeb02f
+
+
+
 ## 0.2.0 (2020-08-14)
 
 * Initial commit ([2435185](https://github.com/arswarog/test/commit/2435185))
