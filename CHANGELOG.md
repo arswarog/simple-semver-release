@@ -1,3 +1,9 @@
+## <small>0.2.3 (2020-08-18)</small>
+
+* chore: remove .idea from git 7f76420
+
+
+
 ## <small>0.2.2 (2020-08-18)</small>
 
 * chore(building): remove unused files and functions 7beada1
