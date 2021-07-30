@@ -39,11 +39,12 @@
     "q": "^1.5.1",
     "read-pkg-up": "^7.0.1",
     "semver": "^7.3.2",
+    "shelljs": "^0.8.4",
     "yargs": "^15.4.1"
   },
   "devDependencies": {
     "@commitlint/cli": "^9.1.1",
-    "@commitlint/config-conventional": "^9.1.1",
+    "@commitlint/config-conventional": "^13.1.0",
     "@types/conventional-changelog-writer": "^4.0.0",
     "@types/conventional-commits-parser": "^3.0.0",
     "@types/git-raw-commits": "^2.0.0",
